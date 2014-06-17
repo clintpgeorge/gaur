@@ -15,18 +15,23 @@ Created On:          Dec 14, 2013
 Last Modified On:    May 05, 2014   
 '''
 
-import os 
+# import os 
 import re 
 import codecs
 import logging
 import json 
 import csv 
-
+import locale
 from gensim import corpora
 from nltk.stem.porter import PorterStemmer
 from nltk.tokenize import PunktWordTokenizer, RegexpTokenizer
 from nltk.stem.wordnet import WordNetLemmatizer
-    
+from nltk.corpus import stopwords
+from dateutil import parser
+from fractions import Fraction
+from os.path import exists, join, splitext
+
+locale.setlocale(locale.LC_NUMERIC, 'US')
     
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
@@ -96,6 +101,29 @@ porter_stemmer = PorterStemmer()
 def xstr(s):
     return '' if s is None else str(s)
 
+def is_date(token):
+    try:
+        parser.parse(token)
+    except:
+        return False
+    return True 
+
+def is_numeric(num_str):
+    try:
+        float(num_str)
+        return True 
+    except ValueError:
+        try:
+            locale.atof(num_str)
+            return True 
+        except ValueError:
+            try:
+                float(Fraction(num_str))
+                return True 
+            except ValueError:
+                return False  
+
+
 def load_en_stopwords(filename):
     '''Loads English stop-words from a given file 
     
@@ -111,9 +139,11 @@ def load_en_stopwords(filename):
             stopwords.append(line.strip().lower())
     return stopwords
 
-stop_words = load_en_stopwords('en_stopwords')
-print 'Number of stop words:', len(stop_words)
+stop_words = stopwords.words('english')
 
+def remove_non_ASCII(s): 
+    return u"".join(i for i in s if ord(i) < 128)
+    
 def cleanup(token):
     '''Clean up a given token based on regular expression, strip(),
     and a predefined set of characters 
@@ -123,28 +153,29 @@ def cleanup(token):
     Arguments:
         a token (str) 
     '''
-    
-    def remove_non_ASCII(s): 
-        return u"".join(i for i in s if ord(i) < 128)
-    
     try:
         
         token = remove_non_ASCII(token)
 
+        # It's commented because it will remove slashes in a URL 
+        # token = re.sub('[\(\)\{\}\[\]\'\"\\\/*<>|]', '', token) 
+
         for each_char in STRIP_CHAR_LIST:
             token = token.strip(each_char)
+            if token.endswith(u"'s"): token = token.rstrip(u"'s")            
         
         if ((token in REMOVE_LIST) # removes if it's in the remove list 
             or (token in stop_words) # removes stop words  
-            or numeric_parser(token) # discards if it's a numeric 
-            or date_parser(token) # discards if it's a date  
-            or time_parser(token) or time_parser2(token)): # discards if it's a time   
-            return u""
+            or is_date(token) # discards if it's a date  
+            or is_numeric(token)): # discards if it's a numeric
+            return ''
 
     except: 
-        return u"" 
+        return '' 
     
     return token.strip()
+
+
 
 def regex_tokenizer(text):
     '''A tokenizer based on NLTK's RegexpTokenizer 
@@ -242,134 +273,252 @@ def stem_tokens(word_tokens):
     return tokens
 
 
+def _process_doc(doc):
+    '''Processes a single indexed document  
+    
+    Arguments: 
+        doc - a document's details in the index file 
+    '''
+    
+    for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
+        try:
+            with codecs.open(doc[u'docpath'], 'r', body_charset) as fp:
+                doc_text = fp.read()
+                doc_text = doc_text.encode('UTF-8') # encodes to UNICODE 
+        except UnicodeError: pass
+        else: break
+    
+    tokens = regex_tokenizer(doc_text)
+    tokens = lemmatize_tokens(tokens)
+    # tokens = stem_tokens(tokens)
+    
+    tokens = [w for w in tokens if w not in stop_words] # double checking 
+        
+    return tokens
+
+
+def create_dictionary(doc_details, dictionary_file, min_word_freq, 
+                      min_word_len, max_word_len):
+    '''
+    Creates a dictionary from the given text files 
+    using the Gensim class and functions
+    
+    Returns:
+        None 
+    Arguments:
+        doc_details - a list of documents to be processed  
+        dictionary_file - the dictionary object file (output)
+        min_word_freq - min frequency of a valid vocabulary term 
+        min_word_len - min word length of a valid vocabulary term 
+        max_word_len - max word length of a valid vocabulary term
+    '''
+
+    # collect statistics about all tokens
+    # doc_id, category, subject, doc_path
+    dictionary = corpora.Dictionary(_process_doc(doc) for doc in doc_details) 
+    
+    # remove words that appear < MIN_FREQUENCY 
+    # remove words that have word length < MIN_WORD_LENGTH
+    # remove words that have word length > MAX_WORD_LENGTH    
+    filter_ids = [] 
+    filter_ids += [tokenid for tokenid, docfreq in dictionary.dfs.iteritems() 
+                   if docfreq < min_word_freq]
+    filter_ids += [tokenid for tokenid, docfreq in dictionary.dfs.iteritems() 
+                   if (len(dictionary[tokenid]) < min_word_len)]
+    filter_ids += [tokenid for tokenid, docfreq in dictionary.dfs.iteritems() 
+                   if (len(dictionary[tokenid]) > max_word_len)]
+    
+    dictionary.filter_tokens(filter_ids) # remove filtered words 
+    dictionary.compactify() # remove gaps in id sequence after words that were removed
+    dictionary.save(dictionary_file) # store the dictionary, for future reference
+    
+    logging.info(str(dictionary))
+
+
+
+class TextCorpus(object):
+    '''The text corpus class 
+    '''
+    
+    def __init__(self, dictionary, doc_details):
+        '''
+        Constructor 
+        
+        Returns: 
+            a corpus object 
+        Arguments: 
+            dictionary - a dictionary object 
+            doc_details - the document's path index file
+        '''
+        
+        self._doc_details = doc_details               
+        self._dictionary = dictionary
+         
+    def __iter__(self):
+
+        for doc in self._doc_details:
+            tokens = _process_doc(doc)
+            yield self._dictionary.doc2bow(tokens)
+
+
+def _create_ldac_corpus(doc_details, dictionary_file, ldac_file, 
+                       min_word_freq, min_word_len, max_word_len, 
+                       delimiter):
+    
+    # Creates the dictionary and the Blei corpus 
+    
+    create_dictionary(doc_details, dictionary_file, min_word_freq, 
+                      min_word_len, max_word_len)
+    dictionary = corpora.Dictionary().load(dictionary_file)       
+    corpus = TextCorpus(dictionary, doc_details) 
+    corpora.BleiCorpus.serialize(ldac_file, corpus, id2word=dictionary)
+    
+    
+    
+    # Saves index to a CSV file 
+    
+    index_file = splitext(ldac_file)[0] + '.csv'
+    fdnames = [u'pageid', u'category', u'title', u'uniquewordcount', 
+               u'doclength', u'supercategories', u'docpath'] 
+    #, u'pagecategories']
+    
+    with codecs.open(index_file, 'wb', encoding='utf-8') as fw:
+        dw = csv.DictWriter(fw, delimiter=delimiter, fieldnames=fdnames, 
+                            extrasaction='ignore')
+        dw.writeheader()
+        for doc_id, doc in enumerate(corpus): 
+            rowdict = doc_details[doc_id]
+            rowdict[u'uniquewordcount'] = len(doc)
+            rowdict[u'doclength'] = sum(count for _, count in doc)
+            # rowdict[u'pagecategories'] = u",".join(rowdict[u'pagecategories'])
+            dw.writerow(rowdict)
+
+    logging.info('The Blei corpus is created.')
+    
 
                     
 
 
-def build_lda_corpus(doc_path_index_file, data_folder,
-                     dictionary_file, ldac_file, 
-                     min_word_freq=5, 
-                     min_word_len=2, 
-                     max_word_len=20,
-                     delimiter=','):
+    
+
+
+def build_ldac_corpus_json(page_info_file, pages_dir, dictionary_file, ldac_file, 
+                           min_word_freq=5, min_word_len=2, max_word_len=20, 
+                           delimiter=';', file_extension=''):
     '''
-    The main function that does the job! 
+    This function reads a JSON index file created by the python script 
+    download_wikipedia_articles.py and creates the LDA-C formatted corpus 
+    and dictionary using the Gensim package 
     
     '''
 
-    def process_index_doc(doc):
-        '''Processes a single indexed document  
-        
-        Arguments: 
-            doc - a document's details in the index file 
-        '''
-        
-        for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
-            try:
-                with codecs.open(doc['docpath'], 'r', body_charset) as fp:
-                    doc_text = fp.read()
-                    doc_text = doc_text.encode('UTF-8') # encodes to UNICODE 
-            except UnicodeError: 
-                pass
-            else: 
-                break
-        
-        tokens = regex_tokenizer(doc_text)
-        tokens = lemmatize_tokens(tokens)
-        # tokens = stem_tokens(tokens)
-        
-        tokens = [w for w in tokens if w not in stop_words] # double checking 
-            
-        return tokens
+    # Reads the document details from JSON index file 
     
-    def create_dictionary(doc_details, 
-                          dictionary_file, 
-                          min_word_freq, 
-                          min_word_len, max_word_len):
-        '''
-        Creates a dictionary from the given text files 
-        using the Gensim class and functions
-        
-        Returns:
-            None 
-        Arguments:
-            doc_details - a list of documents to be processed  
-            dictionary_file - the dictionary object file (output)
-            min_word_freq - min frequency of a valid vocabulary term 
-            min_word_len - min word length of a valid vocabulary term 
-            max_word_len - max word length of a valid vocabulary term
-        '''
-    
-        # collect statistics about all tokens
-        dictionary = corpora.Dictionary(process_index_doc(doc) 
-                                            for doc in doc_details) # doc_id, category, subject, doc_path
-        
-        # remove words that appear < MIN_FREQUENCY 
-        # remove words that have word length < MIN_WORD_LENGTH
-        # remove words that have word length > MAX_WORD_LENGTH    
-        filter_ids = [] 
-        filter_ids += [tokenid for tokenid, docfreq in dictionary.dfs.iteritems() 
-                       if docfreq < min_word_freq]
-        filter_ids += [tokenid for tokenid, docfreq in dictionary.dfs.iteritems() 
-                       if (len(dictionary[tokenid]) < min_word_len)]
-        filter_ids += [tokenid for tokenid, docfreq in dictionary.dfs.iteritems() 
-                       if (len(dictionary[tokenid]) > max_word_len)]
-        
-        dictionary.filter_tokens(filter_ids) # remove filtered words 
-        dictionary.compactify() # remove gaps in id sequence after words that were removed
-        dictionary.save(dictionary_file) # store the dictionary, for future reference
-        
-        logging.info(str(dictionary))
-    
-    
-    class TextCorpus(object):
-        '''The text corpus class 
-        '''
-        
-        def __init__(self, dictionary, doc_details):
-            '''
-            Constructor 
-            
-            Returns: 
-                a corpus object 
-            Arguments: 
-                dictionary - a dictionary object 
-                doc_details - the document's path index file
-            '''
-            
-            self._doc_details = doc_details               
-            self._dictionary = dictionary
-             
-        def __iter__(self):
-    
-            for doc in self._doc_details:
-                tokens = process_index_doc(doc)
-                yield self._dictionary.doc2bow(tokens)
+    doc_details = []
+    with codecs.open(page_info_file, encoding='utf-8') as fp:
+        json_data = json.load(fp)
+        sorted_pages = sorted(json_data[u'pages'], key=lambda k: k[u'category']) 
+        for page in sorted_pages:            
+            if (page[u'category'] in category_filter) or (not category_filter): 
+                if exists(join(pages_dir, page[u'title'] + file_extension)):
+                    page[u'docpath'] = join(pages_dir, page[u'title'] + file_extension)
+                    doc_details.append(page)
+                elif u'filename' in page:
+                    if exists(join(pages_dir, page[u'filename'] + file_extension)):
+                        page[u'docpath'] = join(pages_dir, page[u'filename'] + file_extension)
+                        doc_details.append(page)
+    assert len(doc_details) > 0
+
+    _create_ldac_corpus(doc_details, dictionary_file, ldac_file, min_word_freq, 
+                       min_word_len, max_word_len, delimiter)
+
     
 
+
+def build_ldac_corpus_csv(page_info_file, dictionary_file, ldac_file, 
+                         min_word_freq=5, min_word_len=2, max_word_len=20, 
+                         delimiter=','):
+    '''
+    This function reads the page info CSV file, an index file created by 
+    download_wikipedia_articles.py and creates a LDA-C formatted corpus and 
+    vocabulary using the Gensim package 
+    
+    '''
+
+    # Reads the docs to be processed 
+    with codecs.open(page_info_file, encoding='utf-8') as fp:
+        reader = csv.DictReader(fp, delimiter=delimiter)
+        doc_details = [row for row in reader]
+    assert len(doc_details) > 0
+    print "Number of articles:", len(doc_details)
+
+    _create_ldac_corpus(doc_details, dictionary_file, ldac_file, min_word_freq, 
+                   min_word_len, max_word_len, delimiter)
+
+#     # Creates the dictionary 
+#     create_dictionary(doc_details, dictionary_file, min_word_freq, 
+#                       min_word_len, max_word_len)
+#      
+#     # Creates the corpus 
+#     dictionary = corpora.Dictionary().load(dictionary_file)       
+#     corpus = TextCorpus(dictionary, doc_details) # doesn't load the corpus into the memory!
+#     corpora.BleiCorpus.serialize(ldac_file, corpus, id2word=dictionary)
+#     
+#      
+#     index_file = splitext(ldac_file)[0] + '.csv'
+#     fdnames = [u'pageid', u'category', u'title', 
+#                u'uniquewordcount', u'doclength', 
+#                u'supercategories', u'docpath'] #, u'pagecategories']
+#      
+#     with codecs.open(index_file, 'wb', encoding='utf-8') as fw:
+#         dw = csv.DictWriter(fw, delimiter=delimiter, fieldnames=fdnames, 
+#                             extrasaction='ignore')
+#         dw.writeheader()
+#         for doc_id, doc in enumerate(corpus): 
+#             rowdict = doc_details[doc_id]
+#             rowdict[u'uniquewordcount'] = len(doc)
+#             rowdict[u'doclength'] = sum(count for _, count in doc)
+#             # rowdict[u'pagecategories'] = u",".join(rowdict[u'pagecategories'])
+#             dw.writerow(rowdict)
+# 
+#     logging.info('The Blei corpus is created.')
+
+
+def build_ldac_corpus2_csv(doc_path_index_file, data_folder, dictionary_file, 
+                          ldac_file, min_word_freq=5, min_word_len=2, 
+                          max_word_len=20, delimiter=';'):
+    '''
+    This function reads documents' details from a CSV formatted file and build 
+    the LDA-C formatted corpus and vocabulary. 
+    
+    The CSV headers are a little different from new data sets. This is kept 
+    unchanged to handle backward compatibility. This function is mainly for 
+    datasets such as whales-tires, whales-tires-mixed, whales-tires-reduced 
+    and their variants. These datasets are not created using the python 
+    script download_wikipedia_articles.py   
+    '''
     
     # Reads the docs to be processed 
     doc_details = []
     with open(doc_path_index_file) as fp: 
         reader = csv.DictReader(fp, delimiter=delimiter)
         for row in reader:
-            row['docpath'] = os.path.join(data_folder, row[u'subject'])
+            row['docpath'] = join(data_folder, row[u'subject'])
             doc_details.append(row)
     assert len(doc_details) > 0
-    
 
     # Creates the dictionary 
     create_dictionary(doc_details, dictionary_file, 
                       min_word_freq, min_word_len, max_word_len)
-    
+     
     # Creates the corpus 
     dictionary = corpora.Dictionary().load(dictionary_file)       
     corpus = TextCorpus(dictionary, doc_details) # doesn't load the corpus into the memory!
     corpora.BleiCorpus.serialize(ldac_file, corpus, id2word=dictionary)
-    
-
+     
+ 
     # Saves the file index     
-    index_file = os.path.splitext(ldac_file)[0] + '.index'
+    index_file = splitext(ldac_file)[0] + '.index'
     fdnames = ['doc-id', 'category', 'subject', 
                'unique-word-count', 'doc-length']
     with open(index_file, 'wb') as fw:
@@ -382,199 +531,150 @@ def build_lda_corpus(doc_path_index_file, data_folder,
             rowdict['unique-word-count'] = len(doc)
             rowdict['doc-length'] = sum(count for _, count in doc)
             dw.writerow(rowdict)
- 
-        
+  
+         
     logging.info('The Blei corpus building is completed.')
-    
 
 
 
-def build_wikipedia_corpus(page_info_file, 
-                           pages_dir, 
-                           dictionary_file,
-                           ldac_file, 
-                           min_word_freq=5, 
-                           min_word_len=2, 
-                           max_word_len=20, 
-                           delimiter=','):
-    '''
-    This function reads the JSON file index file 
-    created by download_wikipedia_articles.py and creates a LDA-C 
-    corpus using Gensim package 
-    
-    '''
 
-    def process_index_doc(doc):
-        '''Processes a single indexed document  
-        
-        Arguments: 
-            doc - a document's details in the index file 
-        '''
-        
-        for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
-            try:
-                with codecs.open(doc[u'docpath'], 'r', body_charset) as fp:
-                    doc_text = fp.read()
-                    doc_text = doc_text.encode('UTF-8') # encodes to UNICODE 
-            except UnicodeError: 
-                pass
-            else: 
-                break
-        
-        tokens = regex_tokenizer(doc_text)
-        tokens = lemmatize_tokens(tokens)
-        # tokens = stem_tokens(tokens)
-        
-        tokens = [w for w in tokens if w not in stop_words] # double checking 
-            
-        return tokens
-    
-    def create_dictionary(doc_details, 
-                          dictionary_file, 
-                          min_word_freq, 
-                          min_word_len, max_word_len):
-        '''
-        Creates a dictionary from the given text files 
-        using the Gensim class and functions
-        
-        Returns:
-            None 
-        Arguments:
-            doc_details - a list of documents to be processed  
-            dictionary_file - the dictionary object file (output)
-            min_word_freq - min frequency of a valid vocabulary term 
-            min_word_len - min word length of a valid vocabulary term 
-            max_word_len - max word length of a valid vocabulary term
-        '''
-    
-        # collect statistics about all tokens
-        dictionary = corpora.Dictionary(process_index_doc(doc) 
-                                            for doc in doc_details) # doc_id, category, subject, doc_path
-        
-        # remove words that appear < MIN_FREQUENCY 
-        # remove words that have word length < MIN_WORD_LENGTH
-        # remove words that have word length > MAX_WORD_LENGTH    
-        filter_ids = [] 
-        filter_ids += [tokenid for tokenid, docfreq in dictionary.dfs.iteritems() 
-                       if docfreq < min_word_freq]
-        filter_ids += [tokenid for tokenid, docfreq in dictionary.dfs.iteritems() 
-                       if (len(dictionary[tokenid]) < min_word_len)]
-        filter_ids += [tokenid for tokenid, docfreq in dictionary.dfs.iteritems() 
-                       if (len(dictionary[tokenid]) > max_word_len)]
-        
-        dictionary.filter_tokens(filter_ids) # remove filtered words 
-        dictionary.compactify() # remove gaps in id sequence after words that were removed
-        dictionary.save(dictionary_file) # store the dictionary, for future reference
-        
-        logging.info(str(dictionary))
-    
-    
-    class TextCorpus(object):
-        '''The text corpus class 
-        '''
-        
-        def __init__(self, dictionary, doc_details):
-            '''
-            Constructor 
-            
-            Returns: 
-                a corpus object 
-            Arguments: 
-                dictionary - a dictionary object 
-                doc_details - the document's path index file
-            '''
-            
-            self._doc_details = doc_details               
-            self._dictionary = dictionary
-             
-        def __iter__(self):
-    
-            for doc in self._doc_details:
-                tokens = process_index_doc(doc)
-                yield self._dictionary.doc2bow(tokens)
-    
 
-    doc_details = []
-    with codecs.open(page_info_file, encoding='utf-8') as fp:
-        json_data = json.load(fp)
-        sorted_pages = sorted(json_data[u'pages'], key=lambda k: k[u'category']) 
-        for page in sorted_pages:
-            
-            if (page[u'category'] in category_filter) or (not category_filter): 
-                if os.path.exists(os.path.join(pages_dir, page[u'title'])):
-                    page[u'docpath'] = os.path.join(pages_dir, page[u'title'])
-                    doc_details.append(page)
-                elif u'filename' in page:
-                    if os.path.exists(os.path.join(pages_dir, page[u'filename'])):
-                        page[u'docpath'] = os.path.join(pages_dir, page[u'filename'])
-                        doc_details.append(page)
-                
-    
-    assert len(doc_details) > 0
-    
 
-    # Creates the dictionary 
-    create_dictionary(doc_details, dictionary_file, 
-                      min_word_freq, min_word_len, max_word_len)
-    
-    # Creates the corpus 
-    dictionary = corpora.Dictionary().load(dictionary_file)       
-    corpus = TextCorpus(dictionary, doc_details) # doesn't load the corpus into the memory!
-    corpora.BleiCorpus.serialize(ldac_file, corpus, id2word=dictionary)
-    
-    
-    index_file = os.path.splitext(ldac_file)[0] + '.csv'
-    fdnames = [u'pageid', u'category', u'title', 
-               u'uniquewordcount', u'doclength', 
-               u'supercategories'] #, u'pagecategories']
-    
-    with codecs.open(index_file, 'wb', encoding='utf-8') as fw:
-        dw = csv.DictWriter(fw, delimiter=delimiter, 
-                            fieldnames=fdnames, 
-                            extrasaction='ignore')
-        dw.writeheader()
-        for doc_id, doc in enumerate(corpus): 
-            rowdict = doc_details[doc_id]
-            rowdict[u'uniquewordcount'] = len(doc)
-            rowdict[u'doclength'] = sum(count for _, count in doc)
-            # rowdict[u'pagecategories'] = u",".join(rowdict[u'pagecategories'])
-            dw.writerow(rowdict)
 
-    logging.info('The Blei corpus is created.')
-    
-    
 
+
+
+
+'''
 #===============================================================================
 # TEST SCRIPTS 
 #===============================================================================
-
-'''
-To create LDA corpus based on the JSON input file created by 
-download_wikipedia_articles.py
- 
-Added on Feb 27, 2014 
 '''
 
-# If you wanna create topic modeling (LDA-c) corpus specifically for a set of 
-# categories, update them in the list category_filter 
-category_filter = ["Category:Baleen whales", 
-                    "Category:Dolphins", 
-                    "Category:Killer whales", 
-                    "Category:Oceanic dolphins", 
-                    "Category:Whale products", 
-                    "Category:Whaling"]
-dataset_name = 'Whales2'
+
+stop_words = load_en_stopwords('en_stopwords') 
+print 'Number of stop words:', len(stop_words)
+
+
+#===============================================================================
+# To create LDA corpus based on the JSON input file created by 
+# download_wikipedia_articles.py
+#===============================================================================
+
+# '''
+# Added on Feb 27, 2014 
+# '''
+# 
+# # If you wanna create topic modeling (LDA-c) corpus specifically for a set of 
+# # categories, update them in the list category_filter 
+# category_filter = ["Category:Baleen whales", 
+#                     "Category:Dolphins", 
+#                     "Category:Killer whales", 
+#                     "Category:Oceanic dolphins", 
+#                     "Category:Whale products", 
+#                     "Category:Whaling"]
+# dataset_name = 'Whales2'
+# data_dir = 'E:\\Datasets\\%s' % dataset_name 
+# 
+# 
+# pages_dir = join(data_dir, 'pages')
+# page_info_file = join(data_dir, dataset_name + '.json') 
+# dict_file = join(data_dir, dataset_name + '.dict') 
+# ldac_file = join(data_dir, dataset_name + '.ldac') 
+# build_ldac_corpus_json(page_info_file, pages_dir, 
+#                        dict_file, ldac_file, 
+#                        min_word_freq=15, 
+#                        min_word_len=2, 
+#                        max_word_len=20, 
+#                        delimiter=";")
+# 
+#   
+# '''
+# Added on April 04, 2014 
+# '''
+# 
+# category_filter = ["Category:Eagles", "Category:Falcons", "Category:Falco (genus)", "Category:Falconry", "Category:Harriers (birds)", "Category:Hawks", "Category:True_hawks", "Category:Kites (birds)", "Category:Owls"]
+# dataset_name = 'Birds_of_prey'
+# data_dir = 'E:\\Datasets\\%s' % dataset_name 
+# pages_dir = join(data_dir, 'pages')
+# page_info_file = join(data_dir, dataset_name + '.json') 
+#     
+# dict_file = join(data_dir, dataset_name + '.dict') 
+# ldac_file = join(data_dir, dataset_name + '.ldac') 
+#     
+# build_ldac_corpus_json(page_info_file, pages_dir, 
+#                        dict_file, ldac_file, 
+#                        min_word_freq=15, 
+#                        min_word_len=2, 
+#                        max_word_len=20, 
+#                        delimiter=";") 
+#      
+# '''
+# Added on April 04, 2014 
+# '''
+# 
+# category_filter = ["Category:Eagles", 
+#                    "Category:Owls", 
+#                    "Category:Ducks", 
+#                    "Category:Ratites"]
+# 
+# dataset_name = 'Birds'
+# data_dir = 'E:\\Datasets\\%s' % dataset_name 
+# pages_dir = join(data_dir, 'intro')
+# page_info_file = join(data_dir, dataset_name + '.json') 
+# dict_file = join(data_dir, dataset_name + '.dict') 
+# ldac_file = join(data_dir, dataset_name + '.ldac') 
+#      
+# build_ldac_corpus_json(page_info_file, pages_dir, dict_file, ldac_file, 
+#                        min_word_freq = 5, min_word_len = 2, max_word_len = 20, 
+#                        delimiter = ";", file_extension=".intro.text") 
+# 
+# 
+#  
+# dataset_name = 'Birds'
+# data_dir = 'E:\\Datasets\\%s' % dataset_name 
+# page_info_file = join(data_dir, dataset_name + '.csv') 
+# dict_file = join(data_dir, dataset_name + '-long-doc-duck.dict') 
+# ldac_file = join(data_dir, dataset_name + '-long-doc-duck.ldac') 
+#      
+# build_ldac_corpus_csv(page_info_file, dict_file, ldac_file, 
+#                             min_word_freq = 5, min_word_len = 2, 
+#                             max_word_len = 20, delimiter = ";") 
+# 
+# 
+# 
+
+'''
+Added on June 16, 2014 
+'''
+   
+dataset_name = 'Birds'
 data_dir = 'E:\\Datasets\\%s' % dataset_name 
+pages_dir = join(data_dir, 'pages')
+page_info_file = join(data_dir, dataset_name + '.json') 
+dict_file = join(data_dir, dataset_name + '-whole.dict') 
+ldac_file = join(data_dir, dataset_name + '-whole.ldac') 
+build_ldac_corpus_json(page_info_file, pages_dir, dict_file, ldac_file, 
+                  min_word_freq = 5, min_word_len = 2, max_word_len = 20, 
+                  delimiter = ";") 
 
 
-pages_dir = os.path.join(data_dir, 'pages')
-page_info_file = os.path.join(data_dir, dataset_name + '.json') 
-dict_file = os.path.join(data_dir, dataset_name + '.dict') 
-ldac_file = os.path.join(data_dir, dataset_name + '.ldac') 
-build_wikipedia_corpus(page_info_file, pages_dir, 
-                       dict_file, ldac_file, 
-                       min_word_freq=15, 
-                       min_word_len=2, 
-                       max_word_len=20, 
-                       delimiter=";")
 
+
+
+# #===============================================================================
+# # Build corpus using a CSV file index 
+# #===============================================================================
+# '''
+# To create LDA corpus based on the CSV file index  
+#  
+# Added on Dec 14, 2013  
+# '''
+#    
+# data_folder = 'E:\\Datasets\\whales-tires-mixed2\\docs'  
+# doc_path_index_file = 'E:\\Datasets\\whales-tires-mixed2\\whales-tires-mixed2.csv'
+# dictionary_file = 'E:\\Datasets\\whales-tires-mixed2\\whales-tires-mixed2.dict' 
+# ldac_file = 'E:\\Datasets\\whales-tires-mixed2\\whales-tires-mixed2.ldac'
+#    
+#  
+# build_ldac_corpus2_csv(doc_path_index_file, data_folder, dictionary_file, ldac_file)

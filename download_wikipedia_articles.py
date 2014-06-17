@@ -207,9 +207,8 @@ def get_wikipage(wiki_title):
 def get_page_urls(categories, processed_categories):
     '''
     
-    E.g. 
-    all_pages = get_page_urls([{'title':'Category:Whales', 'category':''}], [])
-    for page in all_pages: print page 
+    >> all_pages = get_page_urls([{'title':'Category:Whales', 'category':''}], [])
+    >> for page in all_pages: print page 
     '''
     
     all_pages = []
@@ -281,7 +280,7 @@ def download_wikipages(page_info_file, pages_dir, all_pages):
 
         try: 
             print 'Querying', page, '....',
-#             introtext = get_wikipage_intro(pagetitle) 
+            introtext = get_wikipage_intro(pagetitle) 
 #             sectext = get_wikipage_subsections(pagetitle) 
 #             
 #             total_text = introtext + u" " + sectext  
@@ -316,6 +315,8 @@ def download_wikipages(page_info_file, pages_dir, all_pages):
                 print >>fp, wikipage_text
             with codecs.open(pagepath + ".html", 'w', encoding='utf-8') as fp:
                 print >>fp, wikipage_html
+            with codecs.open(pagepath + ".intro.txt", 'w', encoding='utf-8') as fp:
+                print >>fp, introtext
             print "DOWNLOADED."
             
             count += 1
@@ -344,7 +345,7 @@ def get_page_categories(title, pageid):
     return categories
     
 
-def dowload_and_save(categories, dataset_name, data_dir):
+def download_and_save(categories, dataset_name, data_dir):
     
     pages_dir = os.path.join(data_dir, 'pages')
     page_info_file = os.path.join(data_dir, dataset_name) 
@@ -369,8 +370,8 @@ def dowload_and_save(categories, dataset_name, data_dir):
 #===============================================================================
 
 
-categories = ["Category:Heart_diseases"] # Specify the Wikipedia categories 
-dataset_name = 'Heart_diseases' # the data-set name 
+# categories = ["Category:Heart_diseases"] # Specify the Wikipedia categories 
+# dataset_name = 'Heart_diseases' # the data-set name 
  
 # categories = ["Category:Whales", "Category:Killer whales", 
 #               "Category:Baleen whales", "Category:Toothed whales"]
@@ -384,6 +385,12 @@ dataset_name = 'Heart_diseases' # the data-set name
 #               "Category:Kites (birds)", "Category:Owls"]
 # dataset_name = "Birds_of_prey"
 
+
+categories = ["Category:Eagles", "Category:Falcons", 
+              "Category:Harriers (birds)", "Category:Hawks", 
+              "Category:Kites (birds)", "Category:Owls", 
+              "Category:Ducks", "Category:Swans", "Category:Ratites"]
+dataset_name = "Birds"
     
 data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
-dowload_and_save(categories, dataset_name, data_dir)
+download_and_save(categories, dataset_name, data_dir)
