@@ -367,13 +367,13 @@ def _create_ldac_corpus(doc_details, dictionary_file, ldac_file,
     
     # Creates the dictionary and the Blei corpus 
     
-    create_dictionary(doc_details, dictionary_file, min_word_freq, 
-                      min_word_len, max_word_len)
+    create_dictionary(doc_details, dictionary_file, min_word_freq, min_word_len, 
+                      max_word_len)
     dictionary = corpora.Dictionary().load(dictionary_file)       
     corpus = TextCorpus(dictionary, doc_details) 
     corpora.BleiCorpus.serialize(ldac_file, corpus, id2word=dictionary)
     
-    
+    logging.info('The Blei corpus is created.')
     
     # Saves index to a CSV file 
     
@@ -393,7 +393,7 @@ def _create_ldac_corpus(doc_details, dictionary_file, ldac_file,
             # rowdict[u'pagecategories'] = u",".join(rowdict[u'pagecategories'])
             dw.writerow(rowdict)
 
-    logging.info('The Blei corpus is created.')
+    
     
 
                     
@@ -452,8 +452,8 @@ def build_ldac_corpus_csv(page_info_file, dictionary_file, ldac_file,
     assert len(doc_details) > 0
     print "Number of articles:", len(doc_details)
 
-    _create_ldac_corpus(doc_details, dictionary_file, ldac_file, min_word_freq, 
-                   min_word_len, max_word_len, delimiter)
+    _create_ldac_corpus(doc_details, dictionary_file, ldac_file, min_word_freq,
+                        min_word_len, max_word_len, delimiter)
 
 #     # Creates the dictionary 
 #     create_dictionary(doc_details, dictionary_file, min_word_freq, 
@@ -539,6 +539,32 @@ def build_ldac_corpus2_csv(doc_path_index_file, data_folder, dictionary_file,
 
 
 
+def build_ldac_corpus_csv3(page_info_file, pages_dir, dictionary_file, 
+                           ldac_file, min_word_freq=2, min_word_len=2, 
+                           max_word_len=100, delimiter=',', file_extension=''):
+    '''
+    This function reads the page info CSV file and creates a LDA-C formatted 
+    corpus and vocabulary using the Gensim package 
+    
+    Format of a single line CSV: 
+        pageid,category,title,uniquewordcount,doclength,supercategories,pagecategories
+        
+    
+    '''
+
+    # Reads the docs to be processed 
+    with codecs.open(page_info_file, encoding='utf-8') as fp:
+        reader = csv.DictReader(fp, delimiter=delimiter)
+        doc_details = []
+        for row in reader: 
+            row['docpath'] = join(pages_dir, row['title'] + file_extension)
+            doc_details.append(row)
+        
+    assert len(doc_details) > 0
+    print "Number of articles:", len(doc_details)
+
+    _create_ldac_corpus(doc_details, dictionary_file, ldac_file, min_word_freq,
+                        min_word_len, max_word_len, delimiter=';')
 
 
 
@@ -631,50 +657,52 @@ print 'Number of stop words:', len(stop_words)
 # 
 # 
 #  
+# '''
+# Added on June 16, 2014 
+# '''
+#    
 # dataset_name = 'Birds'
 # data_dir = 'E:\\Datasets\\%s' % dataset_name 
-# page_info_file = join(data_dir, dataset_name + '.csv') 
-# dict_file = join(data_dir, dataset_name + '-long-doc-duck.dict') 
-# ldac_file = join(data_dir, dataset_name + '-long-doc-duck.ldac') 
-#      
-# build_ldac_corpus_csv(page_info_file, dict_file, ldac_file, 
-#                             min_word_freq = 5, min_word_len = 2, 
-#                             max_word_len = 20, delimiter = ";") 
-# 
-# 
-# 
-
-'''
-Added on June 16, 2014 
-'''
-   
-dataset_name = 'Birds'
-data_dir = 'E:\\Datasets\\%s' % dataset_name 
-pages_dir = join(data_dir, 'pages')
-page_info_file = join(data_dir, dataset_name + '.json') 
-dict_file = join(data_dir, dataset_name + '-whole.dict') 
-ldac_file = join(data_dir, dataset_name + '-whole.ldac') 
-build_ldac_corpus_json(page_info_file, pages_dir, dict_file, ldac_file, 
-                  min_word_freq = 5, min_word_len = 2, max_word_len = 20, 
-                  delimiter = ";") 
+# pages_dir = join(data_dir, 'pages')
+# page_info_file = join(data_dir, dataset_name + '.json') 
+# dict_file = join(data_dir, dataset_name + '-whole.dict') 
+# ldac_file = join(data_dir, dataset_name + '-whole.ldac') 
+# build_ldac_corpus_json(page_info_file, pages_dir, dict_file, ldac_file, 
+#                   min_word_freq = 5, min_word_len = 2, max_word_len = 20, 
+#                   delimiter = ";") 
 
 
 
 
 
-# #===============================================================================
-# # Build corpus using a CSV file index 
+#===============================================================================
+# Build corpus using a CSV file index 
 # #===============================================================================
 # '''
 # To create LDA corpus based on the CSV file index  
-#  
+#   
 # Added on Dec 14, 2013  
 # '''
-#    
+#     
 # data_folder = 'E:\\Datasets\\whales-tires-mixed2\\docs'  
 # doc_path_index_file = 'E:\\Datasets\\whales-tires-mixed2\\whales-tires-mixed2.csv'
 # dictionary_file = 'E:\\Datasets\\whales-tires-mixed2\\whales-tires-mixed2.dict' 
 # ldac_file = 'E:\\Datasets\\whales-tires-mixed2\\whales-tires-mixed2.ldac'
-#    
-#  
+#     
+#   
 # build_ldac_corpus2_csv(doc_path_index_file, data_folder, dictionary_file, ldac_file)
+
+dataset_name = 'whales-8p-intro'
+data_dir = 'E:\\Datasets\\%s' % dataset_name 
+pages_dir = join(data_dir, 'pages')
+page_info_file = join(data_dir, dataset_name + '.csv') 
+dict_file = join(data_dir, dataset_name + '.dict') 
+ldac_file = join(data_dir, dataset_name + '.ldac') 
+      
+build_ldac_corpus_csv3(page_info_file, pages_dir, dict_file, ldac_file, 
+                       min_word_freq = 2, min_word_len = 2, max_word_len = 100, 
+                       delimiter = ',') 
+ 
+ 
+ 
+ 

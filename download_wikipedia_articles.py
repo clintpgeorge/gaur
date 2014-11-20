@@ -385,12 +385,19 @@ def download_and_save(categories, dataset_name, data_dir):
 #               "Category:Kites (birds)", "Category:Owls"]
 # dataset_name = "Birds_of_prey"
 
+# 
+# categories = ["Category:Eagles", "Category:Falcons", 
+#               "Category:Harriers (birds)", "Category:Hawks", 
+#               "Category:Kites (birds)", "Category:Owls", 
+#               "Category:Ducks", "Category:Swans", "Category:Ratites"]
+# dataset_name = "Birds"
+#     
+# data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
+# download_and_save(categories, dataset_name, data_dir)
 
-categories = ["Category:Eagles", "Category:Falcons", 
-              "Category:Harriers (birds)", "Category:Hawks", 
-              "Category:Kites (birds)", "Category:Owls", 
-              "Category:Ducks", "Category:Swans", "Category:Ratites"]
-dataset_name = "Birds"
-    
+
+categories = ["Category:Animals"]
+dataset_name = "Animals"
 data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
+
 download_and_save(categories, dataset_name, data_dir)
