@@ -496,6 +496,9 @@ def build_ldac_corpus2_csv(doc_path_index_file, data_folder, dictionary_file,
     datasets such as whales-tires, whales-tires-mixed, whales-tires-reduced 
     and their variants. These datasets are not created using the python 
     script download_wikipedia_articles.py   
+    
+    CSV Header Format:
+    doc-id;category;sub-category;title;unique-word-count;doc-length
     '''
     
     # Reads the docs to be processed 
@@ -503,7 +506,7 @@ def build_ldac_corpus2_csv(doc_path_index_file, data_folder, dictionary_file,
     with open(doc_path_index_file) as fp: 
         reader = csv.DictReader(fp, delimiter=delimiter)
         for row in reader:
-            row['docpath'] = join(data_folder, row[u'subject'])
+            row['docpath'] = join(data_folder, row[u'title'])
             doc_details.append(row)
     assert len(doc_details) > 0
 
@@ -519,7 +522,7 @@ def build_ldac_corpus2_csv(doc_path_index_file, data_folder, dictionary_file,
  
     # Saves the file index     
     index_file = splitext(ldac_file)[0] + '.index'
-    fdnames = ['doc-id', 'category', 'subject', 
+    fdnames = ['doc-id', 'category', 'sub-category', 'title', 
                'unique-word-count', 'doc-length']
     with open(index_file, 'wb') as fw:
         dw = csv.DictWriter(fw, delimiter=delimiter, 
@@ -692,17 +695,28 @@ print 'Number of stop words:', len(stop_words)
 #   
 # build_ldac_corpus2_csv(doc_path_index_file, data_folder, dictionary_file, ldac_file)
 
-dataset_name = 'whales-8p-intro'
-data_dir = 'E:\\Datasets\\%s' % dataset_name 
-pages_dir = join(data_dir, 'pages')
-page_info_file = join(data_dir, dataset_name + '.csv') 
-dict_file = join(data_dir, dataset_name + '.dict') 
-ldac_file = join(data_dir, dataset_name + '.ldac') 
-      
-build_ldac_corpus_csv3(page_info_file, pages_dir, dict_file, ldac_file, 
-                       min_word_freq = 2, min_word_len = 2, max_word_len = 100, 
-                       delimiter = ',') 
+#dataset_name = 'whales-8p-intro'
+#data_dir = 'E:\\Datasets\\%s' % dataset_name 
+#pages_dir = join(data_dir, 'pages')
+#page_info_file = join(data_dir, dataset_name + '.csv') 
+#dict_file = join(data_dir, dataset_name + '.dict') 
+#ldac_file = join(data_dir, dataset_name + '.ldac') 
+#      
+#build_ldac_corpus_csv3(page_info_file, pages_dir, dict_file, ldac_file, 
+#                       min_word_freq = 2, min_word_len = 2, max_word_len = 100, 
+#                       delimiter = ',') 
  
  
+'''
+To create LDA corpus based on the CSV file index  
+   
+Added on Dec 14, 2013  
+'''
  
+data_folder = 'E:\\Datasets\\wt8\\docs'  
+doc_path_index_file = 'E:\\Datasets\\wt8\\wt8.csv'
+dictionary_file = 'E:\\Datasets\\wt8\\wt8.dict' 
+ldac_file = 'E:\\Datasets\\wt8\\wt8.ldac'
+build_ldac_corpus2_csv(doc_path_index_file, data_folder, dictionary_file, 
+                       ldac_file, min_word_freq=2)
  
