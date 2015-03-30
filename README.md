@@ -1,9 +1,9 @@
 gaur 
 ====
 
-This project provides **libraries** to create datasets for topic modeling or text classification. This also has a **pure python** implementation of the collapsed Gibbs sampling algorithm of the topic model Latent Dirichlet Allocation (Caveat: It's not written handling large datasets).   
+This project provides **libraries** to create datasets for topic modeling or text classification. This also has a **pure python** implementation of the collapsed Gibbs sampling algorithm of the topic model Latent Dirichlet Allocation (Caveat: It's not written for handling large datasets).  
 
-Currently, it supports to download articles from the English wikipedia and create datasets. The user has to specify the Wikipedia categories of interest to download the associated articles and create a data set out of it. This project uses the [MediaWiki API] to query all articles in a Wikipedia category and download articles' text. 
+Currently, it supports downloading articles from the English Wikipedia to create datasets. The user has to specify the Wikipedia categories of interest to download the associated articles and create a data set out of it. This project uses the [MediaWiki API] to query abd download articles in a Wikipedia category. 
 
 Usage
 -----
