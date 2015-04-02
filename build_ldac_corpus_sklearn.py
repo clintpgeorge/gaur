@@ -20,7 +20,7 @@ from utils_text import regex_tokenizer
 
 
 def sample_20newsgroups_docs(categories, sample_size = 50, 
-                             doc_len_range = (200, 400), random_seed = 2015):
+                             doc_len_range = (200, 600), random_seed = 1983):
     """Creates a subset of documents and their labels from the 20newsgroups 
     dataset given in the sklearn.datasets package. 
     
@@ -46,17 +46,17 @@ def sample_20newsgroups_docs(categories, sample_size = 50,
     len_start, len_end = doc_len_range
     doc_lengths = [len(doc.split()) for doc in ds.data]
     doc_indices = [index for index, dl in enumerate(doc_lengths) 
-                   if (dl >= len_start and dl < len_end)]
+                   if (dl > len_start and dl < len_end)]
     cat_doc_indices = defaultdict(list)
     for doc_index in doc_indices:
         cat_id = ds.target[doc_index]
         cat_doc_indices[cat_id] += [doc_index]
         
     selected_doc_indices = []
-    for cat_id, doc_indices in cat_doc_indices.items():
-        assert(len(doc_indices) > sample_size)
+    for cat_id, indices in cat_doc_indices.items():
+        assert(len(indices) > sample_size)
         for i in xrange(sample_size):
-            selected_doc_indices.append(doc_indices[i])
+            selected_doc_indices.append(indices[i])
     seed(random_seed)
     shuffle(selected_doc_indices)
     
@@ -128,11 +128,14 @@ def build_gensim_dictionary(doc_tokens, min_token_freq, min_token_len,
 ###############################################################################
 
 data_dir = "D:\\datasets\\20newsgroups"
-sample_size = 50
-min_token_freq = 5
 min_token_len = 2 
 max_token_len = 100
-# C-5
+
+
+sample_size = 50
+min_token_freq = 5
+
+# C-5a
 ds_name = "med-christian-baseball"
 categories = [  
                 'sci.med',
@@ -165,7 +168,7 @@ categories = [
 #                'talk.religion.misc'
 #             ]            
 
-## C-5.1
+## C-5b
 #ds_name = "med-christian-baseball-30D"
 #categories = [  
 #                'sci.med',
@@ -212,7 +215,7 @@ raw_text_dir = join(ds_dir, "raw-texts")
 dict_file = join(ds_dir, "%s.dict" % ds_name)
 ldac_file = join(ds_dir, "%s.ldac" % ds_name)
 tokens_file = join(ds_dir, "%s.tokens" % ds_name)
-md_file = join(ds_dir, "%s.metadata" % ds_name)
+md_file = join(ds_dir, "%s.csv" % ds_name)
 
 if not exists(ds_dir): mkdir(ds_dir)
 if not exists(raw_text_dir): mkdir(raw_text_dir)
@@ -225,12 +228,12 @@ vocab = gensim_dict.token2id.keys()
 
 with codecs.open(tokens_file, "w", encoding="utf-8") as pf, \
     codecs.open(md_file, "w", encoding="utf-8") as mf: 
-    print >>mf, u'pageid,category,doclength'   
+    print >>mf, u'pageid;category;doclength'   
     for i, doc_text in enumerate(doc_texts):
         raw_file = join(raw_text_dir, "%d.txt" % i)
         with codecs.open(raw_file, "w", encoding="utf-8") as fw:
             print >>fw, doc_text
         doc_t = [token for token in doc_tokens[i] if token in vocab]
         print >>pf, u' '.join(doc_t)
-        print >>mf, u'%d,%s,%d' % (i, doc_labels[i], len(doc_t))
+        print >>mf, u'%d;%s;%d' % (i, doc_labels[i], len(doc_t))
 
