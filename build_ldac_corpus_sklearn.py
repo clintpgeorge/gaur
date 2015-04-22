@@ -135,14 +135,14 @@ max_token_len = 100
 sample_size = 50
 min_token_freq = 5
 
-# C-5a
-ds_name = "med-christian-baseball"
-categories = [  
-                'sci.med',
-                'soc.religion.christian',
-                'rec.sport.baseball'
-             ]
-             
+## C-5a
+#ds_name = "med-christian-baseball"
+#categories = [  
+#                'sci.med',
+#                'soc.religion.christian',
+#                'rec.sport.baseball'
+#             ]
+#             
 ## C-6
 #ds_name = "rec"
 #categories = [  
@@ -178,7 +178,12 @@ categories = [
 #sample_size = 10
 #min_token_freq = 2
 
-
+# C-9
+ds_name = "ibm-mac"
+categories = [  
+                'comp.sys.ibm.pc.hardware',
+                'comp.sys.mac.hardware',
+             ]  
 
 ###############################################################################
 # Gets data from sklearn 
