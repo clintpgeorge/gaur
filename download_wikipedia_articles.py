@@ -204,7 +204,7 @@ def get_wikipage(wiki_title):
 
 
 
-def get_page_urls(categories, processed_categories):
+def get_page_urls(categories, processed_categories, recursive=False):
     '''
     
     >> all_pages = get_page_urls([{'title':'Category:Whales', 'category':''}], [])
@@ -241,9 +241,9 @@ def get_page_urls(categories, processed_categories):
                     categorymember['supercategories'] = category['category'] 
                     all_pages.append(categorymember)
     
-    processed_categories += categories
-    if len(sub_categories):
+    if len(sub_categories) > 0 and recursive:
         print 'Querying', len(sub_categories), 'subcategories'
+        processed_categories += categories
         all_pages += get_page_urls(sub_categories, processed_categories)
     
     return all_pages
@@ -352,9 +352,7 @@ def download_and_save(categories, dataset_name, data_dir):
      
     start_time = datetime.now()
      
-    cats = []
-    for title in categories:
-        cats.append({'title':title, 'category':''})
+    cats = [{'title':title, 'category':''} for title in categories]
     all_pages = get_page_urls(cats, [])
      
     count = download_wikipages(page_info_file, pages_dir, all_pages)
@@ -395,9 +393,30 @@ def download_and_save(categories, dataset_name, data_dir):
 # data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
 # download_and_save(categories, dataset_name, data_dir)
 
+# 
+# categories = ["Category:Animals"]
+# dataset_name = "Animals"
+# data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
+# 
+# download_and_save(categories, dataset_name, data_dir)
 
-categories = ["Category:Animals"]
-dataset_name = "Animals"
+
+################################################################################
+## Run date: August 05, 2015 
+################################################################################
+categories = ["Category:Jackals", "Category:Coyotes", "Category:Wolves"]
+dataset_name = "Canis"
 data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
 
 download_and_save(categories, dataset_name, data_dir)
+
+
+################################################################################
+## Run date: August 05, 2015 
+################################################################################
+categories = ["Category:Acinonyx", "Category:Leopardus", "Category:Lynx", "Category:Prionailurus", "Category:Puma_(genus)"]
+dataset_name = "Felines"
+data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
+
+download_and_save(categories, dataset_name, data_dir)
+

@@ -3,7 +3,8 @@
 hyperparameters for the LDA model   
 
 
-Created on Sun Mar 01 20:50:00 2015
+Created on: Sun Mar 01 20:50:00 2015
+Last modified on: Mon Jun 08 21:05:00 2015  
 
 @author: Clint P. George 
 """
@@ -19,14 +20,16 @@ from gensim import corpora
 from utils_text import regex_tokenizer
 
 
-def sample_20newsgroups_docs(categories, sample_size = 50, 
-                             doc_len_range = (200, 600), random_seed = 1983):
+def sample_20newsgroups_docs(categories, 
+                             sample_size = 50, 
+                             doc_len_range = (200, 600), 
+                             random_seed = 1983):
     """Creates a subset of documents and their labels from the 20newsgroups 
     dataset given in the sklearn.datasets package. 
     
     Arguments: 
         categories - subset of selected categories 
-        sample_size - number of documents in a categories  
+        sample_size - number of documents to be sampled from a category   
         doc_len_range - document length range 
         random_seed - seed for random number generation 
     """
@@ -127,14 +130,13 @@ def build_gensim_dictionary(doc_tokens, min_token_freq, min_token_len,
 ## Hard coded values. Should be edited/checked before running this script  
 ###############################################################################
 
-data_dir = "D:\\datasets\\20newsgroups"
-min_token_len = 2 
-max_token_len = 100
+data_dir = "E:\\Datasets\\20newsgroups"
+#min_token_len = 2 
+#max_token_len = 100
+#
 
-
-sample_size = 50
-min_token_freq = 5
-
+#sample_size = 50
+#min_token_freq = 5
 ## C-5a
 #ds_name = "med-christian-baseball"
 #categories = [  
@@ -177,20 +179,69 @@ min_token_freq = 5
 #             ]
 #sample_size = 10
 #min_token_freq = 2
+#
+## C-9
+#ds_name = "ibm-mac"
+#categories = [  
+#                'comp.sys.ibm.pc.hardware',
+#                'comp.sys.mac.hardware',
+#             ]  
+      
+###############################################################################
+## C-10
+## Run date: June 08, 2015       
+###############################################################################
+# sample_size = 50
+# min_token_freq = 5
+# min_token_len = 2 
+# max_token_len = 100
+# ds_name = "autos-motorcycles"
+# categories = [  
+#                 'rec.autos',
+#                 'rec.motorcycles',
+#              ]  
 
-# C-9
-ds_name = "ibm-mac"
+
+# ###############################################################################
+# ## C-6b
+# ## Run date: June 19, 2015       
+# ###############################################################################
+# sample_size = 50
+# min_token_freq = 5
+# min_token_len = 2 
+# max_token_len = 100
+# ds_name = "rec-b"
+# random_seed = 2015 
+# categories = [  
+#                 'rec.autos',
+#                 'rec.motorcycles',
+#                 'rec.sport.baseball',
+#                 'rec.sport.hockey',
+#              ]
+
+###############################################################################
+## C-4b
+## Run date: July 31, 2015       
+###############################################################################
+sample_size = 50
+min_token_freq = 5
+min_token_len = 2 
+max_token_len = 100
+random_seed = 2015 
+ds_name = "ibm-mac-b"
 categories = [  
                 'comp.sys.ibm.pc.hardware',
                 'comp.sys.mac.hardware',
-             ]  
+             ] 
+
 
 ###############################################################################
 # Gets data from sklearn 
 ###############################################################################
 
 doc_texts, doc_labels, doc_names = sample_20newsgroups_docs(categories, 
-                                                            sample_size)
+                                                            sample_size, 
+                                                            random_seed=random_seed)
 
 
 
