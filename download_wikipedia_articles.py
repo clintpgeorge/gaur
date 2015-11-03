@@ -23,7 +23,9 @@ SECTION_EXCLUSIONS = ['see also',
                       'references', 
                       'further reading', 
                       'external links', 
-                      'bibliography']
+                      'bibliography', 
+                      'footnotes', 
+                      'gallery']
 NAME_SPACES = [0, 14] # http://www.mediawiki.org/wiki/Manual:Namespace
 
 def query(request):
@@ -383,15 +385,21 @@ def download_and_save(categories, dataset_name, data_dir):
 #               "Category:Kites (birds)", "Category:Owls"]
 # dataset_name = "Birds_of_prey"
 
-# 
+ 
 # categories = ["Category:Eagles", "Category:Falcons", 
 #               "Category:Harriers (birds)", "Category:Hawks", 
 #               "Category:Kites (birds)", "Category:Owls", 
 #               "Category:Ducks", "Category:Swans", "Category:Ratites"]
 # dataset_name = "Birds"
-#     
-# data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
-# download_and_save(categories, dataset_name, data_dir)
+#      
+
+
+categories = ["Category:Eagles", "Category:Falco_(genus)", 
+              "Category:Harriers (birds)", "Category:Hawks", 
+              "Category:Kites (birds)", "Category:Owls"]
+dataset_name = "6BirdsofPrey"
+data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
+download_and_save(categories, dataset_name, data_dir)
 
 # 
 # categories = ["Category:Animals"]
@@ -401,22 +409,22 @@ def download_and_save(categories, dataset_name, data_dir):
 # download_and_save(categories, dataset_name, data_dir)
 
 
-################################################################################
-## Run date: August 05, 2015 
-################################################################################
-categories = ["Category:Jackals", "Category:Coyotes", "Category:Wolves"]
-dataset_name = "Canis"
-data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
+# ################################################################################
+# ## Run date: August 05, 2015 
+# ################################################################################
+# categories = ["Category:Jackals", "Category:Coyotes", "Category:Wolves"]
+# dataset_name = "Canis"
+# data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
+# 
+# download_and_save(categories, dataset_name, data_dir)
 
-download_and_save(categories, dataset_name, data_dir)
 
-
-################################################################################
-## Run date: August 05, 2015 
-################################################################################
-categories = ["Category:Acinonyx", "Category:Leopardus", "Category:Lynx", "Category:Prionailurus", "Category:Puma_(genus)"]
-dataset_name = "Felines"
-data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
-
-download_and_save(categories, dataset_name, data_dir)
+# ################################################################################
+# ## Run date: August 05, 2015 
+# ################################################################################
+# categories = ["Category:Acinonyx", "Category:Leopardus", "Category:Lynx", "Category:Prionailurus", "Category:Puma_(genus)"]
+# dataset_name = "Felines"
+# data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
+# 
+# download_and_save(categories, dataset_name, data_dir)
 

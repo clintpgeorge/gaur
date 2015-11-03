@@ -619,16 +619,24 @@ print 'Number of stop words:', len(stop_words)
 # '''
 # Added on April 04, 2014 
 # '''
-# 
-# category_filter = ["Category:Eagles", "Category:Falcons", "Category:Falco (genus)", "Category:Falconry", "Category:Harriers (birds)", "Category:Hawks", "Category:True_hawks", "Category:Kites (birds)", "Category:Owls"]
+#  
+# category_filter = ["Category:Eagles", 
+#                    "Category:Falcons", 
+#                    "Category:Falco (genus)", 
+#                    "Category:Falconry", 
+#                    "Category:Harriers (birds)", 
+#                    "Category:Hawks", 
+#                    "Category:True_hawks", 
+#                    "Category:Kites (birds)", 
+#                    "Category:Owls"]
 # dataset_name = 'Birds_of_prey'
 # data_dir = 'E:\\Datasets\\%s' % dataset_name 
 # pages_dir = join(data_dir, 'pages')
 # page_info_file = join(data_dir, dataset_name + '.json') 
-#     
+#      
 # dict_file = join(data_dir, dataset_name + '.dict') 
 # ldac_file = join(data_dir, dataset_name + '.ldac') 
-#     
+#      
 # build_ldac_corpus_json(page_info_file, pages_dir, 
 #                        dict_file, ldac_file, 
 #                        min_word_freq=15, 
@@ -702,28 +710,63 @@ Wikipedia categories: Canis and Felines
 #                       delimiter=',')
 
 ################################################################################
-categories = ["Category:Acinonyx", "Category:Leopardus", "Category:Lynx", "Category:Prionailurus", "Category:Puma_(genus)"]
-dataset_name = "Felines"
-data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
-pages_dir = join(data_dir, 'pages')
- 
-dict_file = join(data_dir, dataset_name + '.dict') 
-ldac_file = join(data_dir, dataset_name + '.ldac') 
- 
-# Stept 1: 
-# page_info_file = join(data_dir, dataset_name + '.json') 
-# build_ldac_corpus_json(page_info_file, pages_dir, dict_file, ldac_file, 
-#                   min_word_freq = 10, min_word_len = 2, max_word_len = 20, 
-#                   delimiter = ";") 
- 
-# Step 2: This is to recreate corpus after manually checking the page index file
-# CSV file  
-page_info_file = join(data_dir, dataset_name + '2.csv') 
-build_ldac_corpus_csv(page_info_file, dict_file, ldac_file, 
-                      min_word_freq=5, min_word_len=2, max_word_len=20, 
-                      delimiter=',')
+# categories = ["Category:Acinonyx", "Category:Leopardus", "Category:Lynx", "Category:Prionailurus", "Category:Puma_(genus)"]
+# dataset_name = "Felines"
+# data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
+# pages_dir = join(data_dir, 'pages')
+#  
+# dict_file = join(data_dir, dataset_name + '.dict') 
+# ldac_file = join(data_dir, dataset_name + '.ldac') 
+#  
+# # Stept 1: 
+# # page_info_file = join(data_dir, dataset_name + '.json') 
+# # build_ldac_corpus_json(page_info_file, pages_dir, dict_file, ldac_file, 
+# #                   min_word_freq = 10, min_word_len = 2, max_word_len = 20, 
+# #                   delimiter = ";") 
+#  
+# # Step 2: This is to recreate corpus after manually checking the page index file
+# # CSV file  
+# page_info_file = join(data_dir, dataset_name + '2.csv') 
+# build_ldac_corpus_csv(page_info_file, dict_file, ldac_file, 
+#                       min_word_freq=5, min_word_len=2, max_word_len=20, 
+#                       delimiter=',')
 
 ################################################################################
+
+# categories = ["Category:Leopardus", "Category:Lynx", "Category:Prionailurus"]
+# dataset_name = "Cats"
+# data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
+# pages_dir = join(data_dir, 'pages')
+#  
+# dict_file = join(data_dir, dataset_name + '.dict') 
+# ldac_file = join(data_dir, dataset_name + '.ldac') 
+#  
+# 
+# # Step 2: This is to recreate corpus after manually checking the page index file
+# # CSV file  
+# page_info_file = join(data_dir, dataset_name + '.csv') 
+# build_ldac_corpus_csv(page_info_file, dict_file, ldac_file, 
+#                       min_word_freq=7, min_word_len=2, max_word_len=20, 
+#                       delimiter=',')
+# 
+# 
+# categories = ["Category:Acinonyx", "Category:Leopardus", "Category:Prionailurus", "Category:Puma_(genus)"]
+# dataset_name = "Felines"
+# data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
+# pages_dir = join(data_dir, 'pages')
+#  
+# dict_file = join(data_dir, dataset_name + '.dict') 
+# ldac_file = join(data_dir, dataset_name + '.ldac') 
+#  
+# 
+# # Step 2: This is to recreate corpus after manually checking the page index file
+# # CSV file  
+# page_info_file = join(data_dir, dataset_name + '.csv') 
+# build_ldac_corpus_csv(page_info_file, dict_file, ldac_file, 
+#                       min_word_freq=5, min_word_len=2, max_word_len=20, 
+#                       delimiter=',')
+
+
 
 #===============================================================================
 # Build corpus using a CSV file index 
@@ -767,3 +810,40 @@ build_ldac_corpus_csv(page_info_file, dict_file, ldac_file,
 # build_ldac_corpus2_csv(doc_path_index_file, data_folder, dictionary_file, 
 #                        ldac_file, min_word_freq=2)
 #  
+
+
+#===============================================================================
+# Added on April 04, 2014 
+#===============================================================================
+
+ 
+category_filter = ["Category:Eagles", 
+                   "Category:Falco (genus)", 
+                   "Category:Harriers (birds)", 
+                   "Category:Hawks", 
+                   "Category:Kites (birds)", 
+                   "Category:Owls"]
+dataset_name = '6BirdsofPrey'
+data_dir = 'E:\\Datasets\\%s' % dataset_name 
+pages_dir = join(data_dir, 'pages')
+
+     
+dict_file = join(data_dir, dataset_name + '.dict') 
+ldac_file = join(data_dir, dataset_name + '.ldac') 
+     
+# # Step 1 
+# page_info_file = join(data_dir, dataset_name + '.json') 
+# build_ldac_corpus_json(page_info_file, pages_dir, 
+#                        dict_file, ldac_file, 
+#                        min_word_freq=15, 
+#                        min_word_len=2, 
+#                        max_word_len=20, 
+#                        delimiter=";") 
+
+
+# Step 2: This is to recreate corpus after manually checking the page index file
+# CSV file  
+page_info_file = join(data_dir, dataset_name + '.csv') 
+build_ldac_corpus_csv(page_info_file, dict_file, ldac_file, min_word_freq=15, 
+                      min_word_len=2, max_word_len=20, delimiter=';')
+
