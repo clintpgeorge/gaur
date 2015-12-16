@@ -287,6 +287,7 @@ def download_wikipages(page_info_file, pages_dir, all_pages):
 #             
 #             total_text = introtext + u" " + sectext  
             wikipage_text, wikipage_html = get_wikipage(pagetitle)
+            wikipage_text = wikipage_text.encode(encoding="ascii", errors="ignore")
             
             num_w = len(wikipage_text.split())   
             print "word count:", num_w,            
@@ -394,12 +395,30 @@ def download_and_save(categories, dataset_name, data_dir):
 #      
 
 
-categories = ["Category:Eagles", "Category:Falco_(genus)", 
-              "Category:Harriers (birds)", "Category:Hawks", 
-              "Category:Kites (birds)", "Category:Owls"]
-dataset_name = "6BirdsofPrey"
+# categories = ["Category:Eagles", "Category:Falco_(genus)", 
+#               "Category:Harriers (birds)", "Category:Hawks", 
+#               "Category:Kites (birds)", "Category:Owls"]
+# dataset_name = "6BirdsofPrey"
+# data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
+# download_and_save(categories, dataset_name, data_dir)
+
+# # Added on December 05, 2015 
+# categories = ["Category:Jackals", "Category:Wolves"]
+# dataset_name = "jackals-wolves"
+# data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
+# download_and_save(categories, dataset_name, data_dir)
+
+# Added on December 05, 2015 
+categories = ["Category:Eagles", "Category:Falco_(genus)"]
+dataset_name = "eagles-falco"
 data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
 download_and_save(categories, dataset_name, data_dir)
+
+# # Added on December 05, 2015 
+# categories = ["Category:Ducks", "Category:Swans"]
+# dataset_name = "ducks-swan"
+# data_dir = "E:\\Datasets\\%s" % dataset_name # the download directory 
+# download_and_save(categories, dataset_name, data_dir)
 
 # 
 # categories = ["Category:Animals"]

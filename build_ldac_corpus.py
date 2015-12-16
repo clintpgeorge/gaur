@@ -814,20 +814,26 @@ Wikipedia categories: Canis and Felines
 
 #===============================================================================
 # Added on April 04, 2014 
+# Updated on December 05, 2015 
 #===============================================================================
 
  
-category_filter = ["Category:Eagles", 
-                   "Category:Falco (genus)", 
-                   "Category:Harriers (birds)", 
-                   "Category:Hawks", 
-                   "Category:Kites (birds)", 
-                   "Category:Owls"]
-dataset_name = '6BirdsofPrey'
+# category_filter = ["Category:Eagles", 
+#                    "Category:Falco (genus)", 
+#                    "Category:Harriers (birds)", 
+#                    "Category:Hawks", 
+#                    "Category:Kites (birds)", 
+#                    "Category:Owls"]
+# dataset_name = '6BirdsofPrey'
+
+# category_filter = ["Category:Eagles", "Category:Falco (genus)"]
+# dataset_name = 'eagles-falco'
+
+
+# dataset_name = 'leopardus-puma'
+dataset_name = 'eagles-owls'
 data_dir = 'E:\\Datasets\\%s' % dataset_name 
 pages_dir = join(data_dir, 'pages')
-
-     
 dict_file = join(data_dir, dataset_name + '.dict') 
 ldac_file = join(data_dir, dataset_name + '.ldac') 
      
@@ -835,7 +841,7 @@ ldac_file = join(data_dir, dataset_name + '.ldac')
 # page_info_file = join(data_dir, dataset_name + '.json') 
 # build_ldac_corpus_json(page_info_file, pages_dir, 
 #                        dict_file, ldac_file, 
-#                        min_word_freq=15, 
+#                        min_word_freq=10, 
 #                        min_word_len=2, 
 #                        max_word_len=20, 
 #                        delimiter=";") 
@@ -844,6 +850,6 @@ ldac_file = join(data_dir, dataset_name + '.ldac')
 # Step 2: This is to recreate corpus after manually checking the page index file
 # CSV file  
 page_info_file = join(data_dir, dataset_name + '.csv') 
-build_ldac_corpus_csv(page_info_file, dict_file, ldac_file, min_word_freq=15, 
+build_ldac_corpus_csv(page_info_file, dict_file, ldac_file, min_word_freq=5, 
                       min_word_len=2, max_word_len=20, delimiter=';')
 
