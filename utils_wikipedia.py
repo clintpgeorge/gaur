@@ -256,6 +256,7 @@ def get_page_urls(categories, processed_categories, recursive=False):
 
 def get_collection_page_urls(categories, 
                              visited_categories, 
+                             visited_pages,
                              recurse = False, 
                              recursion_level = 0):
     '''This function gets URLs of all Wikipedia pages under the given set of 
@@ -268,6 +269,7 @@ def get_collection_page_urls(categories,
     {'title':'Category:Falco_(genus)', 'category-path':'', 'collection':'Falcon'}
     @param visited_categories: a list of category dictionaries, which is used 
     for handling recursion 
+    @param visted_pages: a list of page ids that is used to avoid duplicates 
     @param recurse: sets to recurse or not (True or False). Defaulted to False
     @param recursion_level: reursion level defaulted to 0 and it is incremented 
     in each iteration of the recursion  			
@@ -275,7 +277,7 @@ def get_collection_page_urls(categories,
 	@since: February 09, 2016 
 	
 	@example: 
-    >> pages = get_collection_page_urls([{'title':'Category:Falco_(genus)', 'category-path':'', 'collection':'Falcon'}], [])
+    >> pages = get_collection_page_urls([{'title':'Category:Falco_(genus)', 'category-path':'', 'collection':'Falcon'}], [], [])
     >> for page in pages: print page 
     
     '''
@@ -306,16 +308,21 @@ def get_collection_page_urls(categories,
                     if categorytitle not in [ct['title'] for ct in visited_categories]:
                         sub_categories.append(sub_category)
                 
-                elif categorymember['type'] == 'page': 
+                elif categorymember['type'] == 'page' and categorymember['pageid'] not in visited_pages: 
                     categorymember['category'] = category['title'] 
                     categorymember['category-path'] = category['category-path'] 
                     categorymember['collection'] = category['collection'] 
                     pages.append(categorymember)
+                    visited_pages.append(categorymember['pageid'])
     
     # Does recursion level-by-level 
     if len(sub_categories) > 0 and recurse and recursion_level <= MAX_RECURSION_LEVEL:
         print 'Querying', len(sub_categories), 'subcategories'
-        pages += get_collection_page_urls(sub_categories, visited_categories + categories, recurse, recursion_level + 1)
+        pages += get_collection_page_urls(sub_categories, 
+										  visited_categories + categories, 
+										  visited_pages, 
+										  recurse, 
+										  recursion_level + 1)
     
     return pages
 
