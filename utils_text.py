@@ -11,7 +11,7 @@ Versions:
 import quopri
 import codecs
 import locale
-from nltk.tokenize import PunktWordTokenizer, RegexpTokenizer
+from nltk.tokenize import RegexpTokenizer
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.stem import SnowballStemmer
 from dateutil import parser
@@ -56,7 +56,7 @@ pat4 = r'''(?x)                    # set flag to allow verbose regexps
 
 regx_tokenizer = RegexpTokenizer(pat4)
 
-punkt_tokenizer = PunktWordTokenizer()
+# punkt_tokenizer = PunktWordTokenizer()
 wordnet_lmtzr = WordNetLemmatizer()
 snowball_stemmer = SnowballStemmer("english") # Choose a language
 
@@ -83,7 +83,7 @@ def is_numeric(num_str):
             try:
                 float(Fraction(num_str))
                 return True 
-            except ValueError:
+            except:
                 return False  
 
 def load_en_stopwords(filename):
@@ -106,8 +106,9 @@ stop_words = load_en_stopwords('en_stopwords')
 STRIP_CHARS = u''.join([u'_', u'-', u',', u'!', u':', u'.', u'?', u';', 
                         u'=', u'…', u'•', u'–', u'¿', u'¡', u'º', u'ª', 
                         u'«', u'»', u'*', u'~', u'`', u':', u'<', u'>', 
-                        u'{', u'}', u'[', u']', u'//', u'\\', u'(', u')', 
-                        u'@', u'^', u'&', u'|']) 
+                        u'{', u'}', u'[', u']', u'/', u'\\', u'(', u')', 
+                        u'@', u'^', u'&', u'|', u'"', u'\'', u'#', u'$', 
+                        u'%']) 
 stop_words += [u"[", u"]", u"{", u"}", u"(", u")", u"'", u".", u"..", 
                u"...", u",", u"?", u"!", u"/", u"\"", u"\"", u";", u":", 
                u"-", u"`", u"~", u"@", u"$", u"^", u"|", u"#", u"=", u"*"]
@@ -124,7 +125,7 @@ def cleanup(token):
     '''
 
 
-    token = quopri.decodestring(token).encode('UTF-8')
+    # token = quopri.decodestring(token).encode('UTF-8')
     token = token.strip(STRIP_CHARS)
     
     if (token in stop_words # removes if it's in the remove list 
@@ -156,29 +157,29 @@ def regex_tokenizer(text):
     return cleaned_tokens
 
    
-   
-def punkt_word_tokenizer(text):
-    '''A tokenizer based on NLTK's PunktWordTokenizer 
-    
-    Returns: 
-        a list of tokens 
-    Arguments:
-        a string to tokenized 
-    
-    '''
-    try: text = ' '.join(text.lower().split()) 
-    except Exception: pass  
-    tokens = punkt_tokenizer.tokenize(text)
-    
-    cleaned_tokens = []
-    for w in tokens:
-        try: token = cleanup(w.lower()) 
-        except: pass 
-        if len(token) > 0: 
-            for wt in token.split(','): 
-                cleaned_tokens.append(wt)
-
-    return cleaned_tokens
+#    
+# def punkt_word_tokenizer(text):
+#     '''A tokenizer based on NLTK's PunktWordTokenizer 
+#     
+#     Returns: 
+#         a list of tokens 
+#     Arguments:
+#         a string to tokenized 
+#     
+#     '''
+#     try: text = ' '.join(text.lower().split()) 
+#     except Exception: pass  
+#     tokens = punkt_tokenizer.tokenize(text)
+#     
+#     cleaned_tokens = []
+#     for w in tokens:
+#         try: token = cleanup(w.lower()) 
+#         except: pass 
+#         if len(token) > 0: 
+#             for wt in token.split(','): 
+#                 cleaned_tokens.append(wt)
+# 
+#     return cleaned_tokens
 
 
 def whitespace_tokenize(doc_text):
