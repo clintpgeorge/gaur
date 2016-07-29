@@ -563,7 +563,7 @@ def build_ldac_corpus_csv3(page_info_file, pages_dir, dictionary_file,
     corpus and vocabulary using the Gensim package 
     
     Format of a single line CSV: 
-        pageid,category,title,uniquewordcount,doclength,supercategories,pagecategories
+        collection,category,title,pageid,uniquewordcount,doclength,category-path,docpath
         
     
     '''

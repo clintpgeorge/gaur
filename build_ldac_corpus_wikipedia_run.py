@@ -230,16 +230,20 @@ Wikipedia categories: Canis and Felines
 #   
 # build_ldac_corpus2_csv(doc_path_index_file, data_folder, dictionary_file, ldac_file)
 
-#dataset_name = 'whales-8p-intro'
-#data_dir = 'E:\\Datasets\\%s' % dataset_name 
-#pages_dir = join(data_dir, 'pages')
-#page_info_file = join(data_dir, dataset_name + '.csv') 
-#dict_file = join(data_dir, dataset_name + '.dict') 
-#ldac_file = join(data_dir, dataset_name + '.ldac') 
-#      
-#build_ldac_corpus_csv3(page_info_file, pages_dir, dict_file, ldac_file, 
-#                       min_word_freq = 2, min_word_len = 2, max_word_len = 100, 
-#                       delimiter = ',') 
+'''
+Last run date: July 11, 2016 
+'''
+
+dataset_name = 'birds'
+data_dir = 'D:\\data\\lda-hp-data\\%s' % dataset_name 
+pages_dir = join(data_dir, 'pages')
+page_info_file = join(data_dir, dataset_name + '.csv') 
+dict_file = join(data_dir, dataset_name + '.dict') 
+ldac_file = join(data_dir, dataset_name + '.ldac') 
+      
+build_ldac_corpus_csv3(page_info_file, pages_dir, dict_file, ldac_file, 
+                       min_word_freq = 2, min_word_len = 2, max_word_len = 100, 
+                       delimiter = ',') 
  
 #  
 # '''
@@ -276,11 +280,11 @@ Wikipedia categories: Canis and Felines
 
 
 # dataset_name = 'leopardus-puma'
-dataset_name = 'eagles-owls'
-data_dir = 'E:\\Datasets\\%s' % dataset_name 
-pages_dir = join(data_dir, 'pages')
-dict_file = join(data_dir, dataset_name + '.dict') 
-ldac_file = join(data_dir, dataset_name + '.ldac') 
+# dataset_name = 'eagles-owls'
+# data_dir = 'E:\\Datasets\\%s' % dataset_name 
+# pages_dir = join(data_dir, 'pages')
+# dict_file = join(data_dir, dataset_name + '.dict') 
+# ldac_file = join(data_dir, dataset_name + '.ldac') 
      
 # # Step 1 
 # page_info_file = join(data_dir, dataset_name + '.json') 
@@ -294,7 +298,7 @@ ldac_file = join(data_dir, dataset_name + '.ldac')
 
 # Step 2: This is to recreate corpus after manually checking the page index file
 # CSV file  
-page_info_file = join(data_dir, dataset_name + '.csv') 
-build_ldac_corpus_csv(page_info_file, dict_file, ldac_file, min_word_freq=5, 
-                      min_word_len=2, max_word_len=20, delimiter=';')
+# page_info_file = join(data_dir, dataset_name + '.csv') 
+# build_ldac_corpus_csv(page_info_file, dict_file, ldac_file, min_word_freq=5, 
+#                       min_word_len=2, max_word_len=20, delimiter=';')
 
